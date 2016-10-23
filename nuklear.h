@@ -14449,7 +14449,8 @@ nk_property_behavior(nk_flags *ws, const struct nk_input *in,
 NK_INTERN void
 nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *style,
     const struct nk_rect *bounds, const struct nk_rect *label, nk_flags state,
-    const char *name, int len, const struct nk_user_font *font)
+    const char *name, int len, const struct nk_user_font *font,
+    float perc)
 {
     struct nk_text text;
     const struct nk_style_item *background;
@@ -14476,6 +14477,28 @@ nk_draw_property(struct nk_command_buffer *out, const struct nk_style_property *
         nk_fill_rect(out, nk_shrink_rect(*bounds,style->border),
             style->rounding, background->data.color);
     }
+
+		{
+			const float rounding = style->rounding/3;
+			const float w2 = bounds->w/2;
+			const float w4 = bounds->w/4;
+			const float h3 = bounds->h/3;
+			const float x0 = bounds->x + w4 - rounding;
+			const float y0 = bounds->y + h3;
+			const float wo = 2*rounding + 1;
+			struct nk_rect bnd1;
+			struct nk_rect bnd2;
+			bnd1.x = x0;
+			bnd1.y = y0;
+			bnd1.w = w2 + wo;
+			bnd1.h = h3;
+			bnd2.x = x0;
+			bnd2.y = y0;
+			bnd2.w = w2*perc + wo;
+			bnd2.h = h3;
+			nk_fill_rect(out, bnd1, rounding, style->border_color);
+			nk_fill_rect(out, bnd2, rounding, nk_rgb(0xa0, 0xa0, 0x0));
+		}
 
     /* draw label */
     text.padding = nk_vec2(0,0);
@@ -14574,7 +14597,22 @@ nk_do_property(nk_flags *ws,
 
     /* draw property */
     if (style->draw_begin) style->draw_begin(out, style->userdata);
-    nk_draw_property(out, style, &property, &label, *ws, name, name_len, font);
+		{
+			float perc = 0.f;
+			switch(variant->kind)
+			{
+				case NK_PROPERTY_INT:
+					perc = (float)variant->value.i / (variant->max_value.i - variant->min_value.i);
+					break;
+				case NK_PROPERTY_FLOAT:
+					perc = (float)variant->value.f / (variant->max_value.f - variant->min_value.f);
+					break;
+				case NK_PROPERTY_DOUBLE:
+					perc = (float)variant->value.d / (variant->max_value.d - variant->min_value.d);
+					break;
+			}
+			nk_draw_property(out, style, &property, &label, *ws, name, name_len, font, perc);
+		}
     if (style->draw_end) style->draw_end(out, style->userdata);
 
     /* execute right button  */
