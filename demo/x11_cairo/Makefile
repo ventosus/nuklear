@@ -1,15 +1,27 @@
 # Install
 BIN = demo
 
+
+# Compiler
+CC = clang
+DCC = gcc
+
 # Flags
 CFLAGS = -std=c89 -pedantic -O2 -I/usr/include/cairo
 
 SRC = main.c
 OBJ = $(SRC:.c=.o)
 
-LIBS = -lcairo -lXext -lXrender -lX11 -lGL -lm
+# Modes
+.PHONY: gcc
+gcc: CC = gcc
+gcc: $(BIN)
+
+.PHONY: clang
+clang: CC = clang
+clang: $(BIN)
 
 $(BIN):
 	@mkdir -p bin
 	rm -f bin/$(BIN) $(OBJS)
-	$(CC) $(SRC) $(CFLAGS) -o bin/$(BIN) $(LIBS)
+	$(CC) $(SRC) $(CFLAGS) -o bin/$(BIN) -lX11 -lm -lGL -lcairo
